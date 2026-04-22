@@ -1,7 +1,9 @@
 const musicModel=require('../model/music.model')
 
 const jwt=require('jsonwebtoken');
-const {uploadFile}=require('../service/storage.service')
+const {uploadFile}=require('../service/storage.service');
+const userModel = require('../model/auth.model');
+const albumModel = require('../model/album.model');
 
 async function createMusic(req,res){
     
@@ -51,4 +53,70 @@ let decode;
     })
 }
 
-module.exports={createMusic}
+async function createAlbum(req,res){
+    const token=req.cookies.token;
+
+    if(!token){
+        return res.status(401).json({
+            meessage:'Un Authorized'
+        })
+    }
+
+let decoded;
+
+try{
+
+    decoded=await jwt.verify(token,process.env.JWT_SECRETKEY);
+
+}
+catch(e){
+    res.status(401).json({
+        message:'Token Invalid'
+    })
+}
+
+const role=decoded.role;
+const id=decoded.id;
+const artistDetails=await userModel.findById(
+    id
+)
+
+if(role!='artist'){
+    res.status(403).json({
+message:"You are not allowed"
+    })
+    }
+
+
+const {title}=req.body
+const {musics}=req.body
+const musicDocs= await musicModel.find({_id:{$in :musics}})
+
+
+const musicUrl=musicDocs.map(music=>music.uri)
+
+const album=await albumModel.create({
+    title:title,
+    musics:musics,
+    artist:id
+})
+
+res.status(201).json({
+    message:"Album Created Successfully",
+    album:{
+        title:album.title,
+        id:album._id,
+        
+    },
+    musics:{
+        ids:album.musics,
+        musicUrls:musicUrl
+
+    },
+    artist:{
+        id:album.artist,
+        username:artistDetails.username
+    }
+})
+}
+module.exports={createMusic,createAlbum}
