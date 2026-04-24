@@ -7,30 +7,6 @@ const albumModel = require('../model/album.model');
 
 async function createMusic(req,res){
     
-    const token=req.cookies.token;
-
-    if(!token){
-        res.status(401).json({
-            message:"Un-authorized"
-        })
-    }
-let decode;
-    try{
-     decode=  jwt.verify(token,process.env.JWT_SECRETKEY)
-    }
-    catch(e){
-        res.status(401).json({
-            message:'Token Invalid'
-        })
-    }
-
-    const role=decode.role
-
-    if(role!="artist"){
-        return res.status(403).json({
-            message:"Forbidden"
-        })
-    }
     const {title}=req.body;
     const uri=req.file.buffer;
 
@@ -39,7 +15,7 @@ let decode;
     const music=await musicModel.create({
         uri:file.url,
         title:title,
-        artist:decode.id
+        artist:req.user.id
     });
 
     res.status(201).json({
@@ -54,29 +30,10 @@ let decode;
 }
 
 async function createAlbum(req,res){
-    const token=req.cookies.token;
+    
 
-    if(!token){
-        return res.status(401).json({
-            meessage:'Un Authorized'
-        })
-    }
-
-let decoded;
-
-try{
-
-    decoded=await jwt.verify(token,process.env.JWT_SECRETKEY);
-
-}
-catch(e){
-    res.status(401).json({
-        message:'Token Invalid'
-    })
-}
-
-const role=decoded.role;
-const id=decoded.id;
+const role=req.user.role;
+const id=req.user.id;
 const artistDetails=await userModel.findById(
     id
 )
@@ -86,7 +43,7 @@ if(role!='artist'){
 message:"You are not allowed"
     })
     }
-
+  
 
 const {title}=req.body
 const {musics}=req.body
