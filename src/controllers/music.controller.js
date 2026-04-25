@@ -34,9 +34,13 @@ async function createAlbum(req,res){
 
 const role=req.user.role;
 const id=req.user.id;
-const artistDetails=await userModel.findById(
-    id
-)
+// const artistDetails=await userModel.findById(
+//     id
+// )
+
+const artistDetails=await musicModel.find().populate("artist","username email")
+
+
 
 if(role!='artist'){
     res.status(403).json({
@@ -65,15 +69,54 @@ res.status(201).json({
         id:album._id,
         
     },
-    musics:{
-        ids:album.musics,
-        musicUrls:musicUrl
+    // musics:{
+    //     ids:album.musics,
+    //     musicUrls:musicUrl
 
-    },
-    artist:{
-        id:album.artist,
-        username:artistDetails.username
-    }
+    // },
+    // artist:{
+    //     id:album.artist,
+    //     username:artistDetails.username
+    // }
+
+    // artist:artistDetails
+
+    musics:artistDetails
 })
 }
-module.exports={createMusic,createAlbum}
+
+
+async function getAllMusic(req,res){
+const musics=await musicModel.find().
+// skip(1).
+// limit(1).
+populate('artist',"username email");
+
+res.status(200).json({
+    message:"Music Fetched Successfully",
+    musics:musics
+})}
+
+async function  getAllAlbum(req,res) {
+     const albums = await albumModel.find().select("title artist").populate("artist", "username email")
+    res.status(200).json({
+        message:"Album Fetched Successfully",
+        albums:albums
+    })
+
+}
+
+async function getAlbumById(req,res){
+    const albumId=req.params.albumId;
+
+    const albums=await  albumModel.findById(albumId).populate("artist", "username email").populate("musics")
+
+    res.status(200).json({
+        message:'Fetched album successfully',
+        albums:albums
+    })
+
+}
+
+
+module.exports={createMusic,createAlbum,getAllMusic,getAllAlbum,getAlbumById}

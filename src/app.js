@@ -9,4 +9,7 @@ app.use(cookieParser());
 app.use('/api/auth',authRouter)
 app.use('/api/music',musicRouter)
 app.use('/api/album',musicRouter)
+app.use('/api/music',musicRouter)
+app.use('/api/album',musicRouter)
+
 module.exports=app
